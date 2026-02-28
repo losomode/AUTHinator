@@ -177,10 +177,10 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-# CORS settings
+# CORS settings — all traffic flows through the Caddy gateway (:8080)
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost',
+    default='http://localhost:8080',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 CORS_ALLOW_CREDENTIALS = True
@@ -193,7 +193,7 @@ SESSION_COOKIE_DOMAIN = None  # Allow localhost
 SESSION_SAVE_EVERY_REQUEST = True  # Ensure session is saved for OAuth flow
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = False
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8001', 'http://127.0.0.1:8001']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080']
 
 # Email settings (for development)
 EMAIL_BACKEND = config(
