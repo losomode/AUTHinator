@@ -65,3 +65,7 @@ htmlcov/
 .hypothesis/
 *.cover
 deft/
+
+# Demo database
+db-demo.sqlite3
+*.demobuild
