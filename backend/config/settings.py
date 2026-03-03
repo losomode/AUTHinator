@@ -29,6 +29,17 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# External domain deployment support
+DEPLOY_DOMAIN = config('DEPLOY_DOMAIN', default='')
+DEPLOY_SCHEME = config('DEPLOY_SCHEME', default='https' if DEPLOY_DOMAIN else 'http')
+
+if DEPLOY_DOMAIN:
+    # Add deployment domain and bare variant to ALLOWED_HOSTS
+    ALLOWED_HOSTS.append(DEPLOY_DOMAIN)
+    bare_domain = DEPLOY_DOMAIN.replace('www.', '')
+    if bare_domain != DEPLOY_DOMAIN:
+        ALLOWED_HOSTS.append(bare_domain)
+
 
 # Application definition
 
@@ -183,6 +194,14 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:8080',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
+
+# Add deployment domain to CORS if configured
+if DEPLOY_DOMAIN:
+    CORS_ALLOWED_ORIGINS.append(f'{DEPLOY_SCHEME}://{DEPLOY_DOMAIN}')
+    bare_domain = DEPLOY_DOMAIN.replace('www.', '')
+    if bare_domain != DEPLOY_DOMAIN:
+        CORS_ALLOWED_ORIGINS.append(f'{DEPLOY_SCHEME}://{bare_domain}')
+
 CORS_ALLOW_CREDENTIALS = True
 
 # Session settings for SSO
@@ -194,6 +213,13 @@ SESSION_SAVE_EVERY_REQUEST = True  # Ensure session is saved for OAuth flow
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = False
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8080']
+
+# Add deployment domain to CSRF trusted origins
+if DEPLOY_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f'{DEPLOY_SCHEME}://{DEPLOY_DOMAIN}')
+    bare_domain = DEPLOY_DOMAIN.replace('www.', '')
+    if bare_domain != DEPLOY_DOMAIN:
+        CSRF_TRUSTED_ORIGINS.append(f'{DEPLOY_SCHEME}://{bare_domain}')
 
 # Email settings (for development)
 EMAIL_BACKEND = config(
