@@ -40,6 +40,13 @@ if DEPLOY_DOMAIN:
     if bare_domain != DEPLOY_DOMAIN:
         ALLOWED_HOSTS.append(bare_domain)
 
+# Frontend URL for SSO redirects
+# Defaults to unified gateway in dev, or deployment domain in production
+FRONTEND_URL = config(
+    'FRONTEND_URL',
+    default=f'{DEPLOY_SCHEME}://{DEPLOY_DOMAIN}' if DEPLOY_DOMAIN else 'http://localhost:8080'
+)
+
 
 # Application definition
 
