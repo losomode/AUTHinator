@@ -68,7 +68,7 @@ graph TB
 ## Quick Start
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.12+
 - Node.js 18+
 - [Task](https://taskfile.dev/) (optional but recommended)
 
@@ -356,7 +356,7 @@ def your_view(request):
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Python 3.11+, Django 6.x, Django REST Framework |
+| **Backend** | Python 3.12+, Django 6.x, Django REST Framework |
 | **Frontend** | TypeScript (strict), React 19, Vite, Tailwind CSS |
 | **Gateway** | Caddy 2.x (in platform mode) |
 | **Authentication** | JWT (simplejwt), django-allauth |
@@ -535,8 +535,8 @@ AUTHinator/
 
 - [ ] **Set `DEBUG=False`** in `.env`
 - [ ] **Generate strong `SECRET_KEY`** (50+ random characters)
-- [ ] **Use PostgreSQL** instead of SQLite
-- [ ] **Enable HTTPS** and set secure cookie flags:
+- [ ] **Configure SQLite path** via `SQLITE_PATH` env var for persistent storage
+- [ ] **Enable HTTPS**
   - `SESSION_COOKIE_SECURE=True`
   - `CSRF_COOKIE_SECURE=True`
   - `SECURE_SSL_REDIRECT=True`
@@ -602,6 +602,19 @@ AUTHinator/
 2. **Verify URL** is `http://localhost:8001/api/services/register/`
 3. **Enable registry** — `SERVICE_REGISTRY_ENABLED=True`
 4. **Check logs** in backend for detailed error
+
+### ⚠️ django-allauth Deprecation Warnings on Startup?
+
+**Symptom**: Server starts but logs show 4 warnings about deprecated `ACCOUNT_*` settings
+
+```
+?: settings.ACCOUNT_AUTHENTICATION_METHOD is deprecated, use: ACCOUNT_LOGIN_METHODS
+?: settings.ACCOUNT_EMAIL_REQUIRED is deprecated, use: ACCOUNT_SIGNUP_FIELDS
+?: settings.ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE is deprecated, use: ACCOUNT_SIGNUP_FIELDS
+?: settings.ACCOUNT_USERNAME_REQUIRED is deprecated, use: ACCOUNT_SIGNUP_FIELDS
+```
+
+**Status**: Known pre-existing issue — does not affect functionality. These settings are in `backend/config/settings.py` and need to be updated to the new django-allauth API. Tracked for a future cleanup PR.
 
 ## Development
 
