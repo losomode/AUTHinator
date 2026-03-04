@@ -363,16 +363,34 @@ def your_view(request):
 | **SSO** | Google OAuth, Microsoft Azure AD, Auth0, Okta |
 | **MFA** | TOTP, WebAuthn/passkeys |
 | **Testing** | pytest + coverage (86.94%), pytest-django |
-| **Database** | SQLite (dev), PostgreSQL (prod) |
+| **Database** | SQLite (dev + prod) |
 | **Task Runner** | [Taskfile](https://taskfile.dev/) |
 
 ## 📦 Deployment
 
 ### Docker Deployment (Recommended)
 
+AUTHinator ships with a `Dockerfile` and is orchestrated by the [Inator Platform](https://github.com/losomode/inator) via Docker Compose.
+
 ```bash
-# Coming soon - Docker Compose setup
+# From the platform root (inator/)
+docker compose -f docker-compose.dev.yml up --build   # Development
+docker compose up --build                             # Production
 ```
+
+SQLite data is persisted in a named Docker volume (`authinator_data`). The database file lives at `/app/backend/data/db.sqlite3` inside the container.
+
+To run Django management commands inside the container:
+
+```bash
+# Migrations
+docker compose -f docker-compose.dev.yml exec authinator python backend/manage.py migrate
+
+# Create superuser
+docker compose -f docker-compose.dev.yml exec authinator python backend/manage.py createsuperuser
+```
+
+See the platform [docker-compose.dev.yml](https://github.com/losomode/inator/blob/main/docker-compose.dev.yml) and [docker-compose.yml](https://github.com/losomode/inator/blob/main/docker-compose.yml) for the full configuration.
 
 ### Manual Deployment
 
@@ -381,7 +399,7 @@ def your_view(request):
 ```bash
 # 1. Install dependencies
 cd backend
-pip install -r requirements.txt gunicorn psycopg2-binary
+pip install -r requirements.txt gunicorn
 
 # 2. Set environment variables (see below)
 cp .env.example .env
@@ -424,8 +442,8 @@ DEBUG=False                    # MUST be False in production
 SECRET_KEY=your-secret-key-min-50-chars
 ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com
 
-# Database (use PostgreSQL in production)
-DATABASE_URL=postgresql://user:pass@localhost:5432/authinator
+# Database (SQLite — set path for Docker volume persistence)
+SQLITE_PATH=/app/backend/data/db.sqlite3
 
 # CORS (your frontend domains)
 CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
