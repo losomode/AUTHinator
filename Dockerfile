@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ── Dev stage (Django runserver, source volume-mounted) ──────────────────────
-FROM python:3.11-slim AS dev
+FROM python:3.12-slim AS dev
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ EXPOSE 8001
 CMD ["python", "backend/manage.py", "runserver", "0.0.0.0:8001"]
 
 # ── Prod stage (Gunicorn, static files collected) ────────────────────────────
-FROM python:3.11-slim AS prod
+FROM python:3.12-slim AS prod
 
 WORKDIR /app
 
