@@ -372,23 +372,42 @@ def your_view(request):
 
 AUTHinator ships with a `Dockerfile` and is orchestrated by the [Inator Platform](https://github.com/losomode/inator) via Docker Compose.
 
+#### Development
+
 ```bash
 # From the platform root (inator/)
-docker compose -f docker-compose.dev.yml up --build   # Development
-docker compose up --build                             # Production
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-SQLite data is persisted in a named Docker volume (`authinator_data`). The database file lives at `/app/backend/data/db.sqlite3` inside the container.
+SQLite data persists in the `authinator_data` named volume at `/app/backend/data/db.sqlite3`.
 
-To run Django management commands inside the container:
+Useful commands inside the dev container:
 
 ```bash
-# Migrations
+# Migrations (run automatically on startup, but can be forced)
 docker compose -f docker-compose.dev.yml exec authinator python backend/manage.py migrate
 
 # Create superuser
 docker compose -f docker-compose.dev.yml exec authinator python backend/manage.py createsuperuser
 ```
+
+#### Production
+
+```bash
+# 1. Create .env.prod from the example
+cp backend/.env.prod.example backend/.env.prod
+# Edit backend/.env.prod: set SECRET_KEY, ALLOWED_HOSTS, SMTP, SSO keys, etc.
+
+# 2. From the platform root — set domain/TLS vars
+export DEPLOY_DOMAIN=yourapp.com
+export CADDY_ACME_EMAIL=you@yourapp.com
+
+# 3. Build and start
+task docker:prod:build
+task docker:prod:up
+```
+
+In production, the **React frontend is compiled and baked into the Caddy image** (no frontend container). Caddy handles TLS automatically via Let’s Encrypt. Migrations run automatically on startup.
 
 See the platform [docker-compose.dev.yml](https://github.com/losomode/inator/blob/main/docker-compose.dev.yml) and [docker-compose.yml](https://github.com/losomode/inator/blob/main/docker-compose.yml) for the full configuration.
 
