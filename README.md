@@ -68,7 +68,7 @@ graph TB
 ## Quick Start
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.12+
 - Node.js 18+
 - [Task](https://taskfile.dev/) (optional but recommended)
 
@@ -356,23 +356,60 @@ def your_view(request):
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Python 3.11+, Django 6.x, Django REST Framework |
+| **Backend** | Python 3.12+, Django 6.x, Django REST Framework |
 | **Frontend** | TypeScript (strict), React 19, Vite, Tailwind CSS |
 | **Gateway** | Caddy 2.x (in platform mode) |
 | **Authentication** | JWT (simplejwt), django-allauth |
 | **SSO** | Google OAuth, Microsoft Azure AD, Auth0, Okta |
 | **MFA** | TOTP, WebAuthn/passkeys |
 | **Testing** | pytest + coverage (86.94%), pytest-django |
-| **Database** | SQLite (dev), PostgreSQL (prod) |
+| **Database** | SQLite (dev + prod) |
 | **Task Runner** | [Taskfile](https://taskfile.dev/) |
 
 ## 📦 Deployment
 
 ### Docker Deployment (Recommended)
 
+AUTHinator ships with a `Dockerfile` and is orchestrated by the [Inator Platform](https://github.com/losomode/inator) via Docker Compose.
+
+#### Development
+
 ```bash
-# Coming soon - Docker Compose setup
+# From the platform root (inator/)
+docker compose -f docker-compose.dev.yml up --build
 ```
+
+SQLite data persists in the `authinator_data` named volume at `/app/backend/data/db.sqlite3`.
+
+Useful commands inside the dev container:
+
+```bash
+# Migrations (run automatically on startup, but can be forced)
+docker compose -f docker-compose.dev.yml exec authinator python backend/manage.py migrate
+
+# Create superuser
+docker compose -f docker-compose.dev.yml exec authinator python backend/manage.py createsuperuser
+```
+
+#### Production
+
+```bash
+# 1. Create .env.prod from the example
+cp backend/.env.prod.example backend/.env.prod
+# Edit backend/.env.prod: set SECRET_KEY, ALLOWED_HOSTS, SMTP, SSO keys, etc.
+
+# 2. From the platform root — set domain/TLS vars
+export DEPLOY_DOMAIN=yourapp.com
+export CADDY_ACME_EMAIL=you@yourapp.com
+
+# 3. Build and start
+task docker:prod:build
+task docker:prod:up
+```
+
+In production, the **React frontend is compiled and baked into the Caddy image** (no frontend container). Caddy handles TLS automatically via Let’s Encrypt. Migrations run automatically on startup.
+
+See the platform [docker-compose.dev.yml](https://github.com/losomode/inator/blob/main/docker-compose.dev.yml) and [docker-compose.yml](https://github.com/losomode/inator/blob/main/docker-compose.yml) for the full configuration.
 
 ### Manual Deployment
 
@@ -381,7 +418,7 @@ def your_view(request):
 ```bash
 # 1. Install dependencies
 cd backend
-pip install -r requirements.txt gunicorn psycopg2-binary
+pip install -r requirements.txt gunicorn
 
 # 2. Set environment variables (see below)
 cp .env.example .env
@@ -424,8 +461,8 @@ DEBUG=False                    # MUST be False in production
 SECRET_KEY=your-secret-key-min-50-chars
 ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com
 
-# Database (use PostgreSQL in production)
-DATABASE_URL=postgresql://user:pass@localhost:5432/authinator
+# Database (SQLite — set path for Docker volume persistence)
+SQLITE_PATH=/app/backend/data/db.sqlite3
 
 # CORS (your frontend domains)
 CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
@@ -517,8 +554,8 @@ AUTHinator/
 
 - [ ] **Set `DEBUG=False`** in `.env`
 - [ ] **Generate strong `SECRET_KEY`** (50+ random characters)
-- [ ] **Use PostgreSQL** instead of SQLite
-- [ ] **Enable HTTPS** and set secure cookie flags:
+- [ ] **Configure SQLite path** via `SQLITE_PATH` env var for persistent storage
+- [ ] **Enable HTTPS**
   - `SESSION_COOKIE_SECURE=True`
   - `CSRF_COOKIE_SECURE=True`
   - `SECURE_SSL_REDIRECT=True`
@@ -584,6 +621,19 @@ AUTHinator/
 2. **Verify URL** is `http://localhost:8001/api/services/register/`
 3. **Enable registry** — `SERVICE_REGISTRY_ENABLED=True`
 4. **Check logs** in backend for detailed error
+
+### ⚠️ django-allauth Deprecation Warnings on Startup?
+
+**Symptom**: Server starts but logs show 4 warnings about deprecated `ACCOUNT_*` settings
+
+```
+?: settings.ACCOUNT_AUTHENTICATION_METHOD is deprecated, use: ACCOUNT_LOGIN_METHODS
+?: settings.ACCOUNT_EMAIL_REQUIRED is deprecated, use: ACCOUNT_SIGNUP_FIELDS
+?: settings.ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE is deprecated, use: ACCOUNT_SIGNUP_FIELDS
+?: settings.ACCOUNT_USERNAME_REQUIRED is deprecated, use: ACCOUNT_SIGNUP_FIELDS
+```
+
+**Status**: Known pre-existing issue — does not affect functionality. These settings are in `backend/config/settings.py` and need to be updated to the new django-allauth API. Tracked for a future cleanup PR.
 
 ## Development
 
