@@ -26,6 +26,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from auth_core.tokens import create_enriched_tokens
 
 from .models import WebAuthnCredential
 from users.models import User
@@ -72,12 +73,9 @@ def _verify_mfa_token(mfa_token):
 
 
 def _issue_jwt_tokens(user):
-    """Generate JWT access + refresh tokens for the given user."""
-    refresh = RefreshToken.for_user(user)
-    return Response({
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
-    })
+    """Generate JWT access + refresh tokens enriched with USERinator role claims."""
+    tokens = create_enriched_tokens(user)
+    return Response(tokens)
 
 
 # ─── TOTP Endpoints ───────────────────────────────────────────────────────────

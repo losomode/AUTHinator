@@ -244,6 +244,10 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@AUTHinator.lo
 SERVICE_REGISTRY_ENABLED = config('SERVICE_REGISTRY_ENABLED', default=True, cast=bool)
 SERVICE_REGISTRATION_KEY = config('SERVICE_REGISTRATION_KEY', default='dev-service-key-change-in-production')
 
+# USERinator integration — for enriching JWT tokens with role_level
+USERINATOR_API_URL = config('USERINATOR_API_URL', default='http://localhost:8004/api/users/')
+USERINATOR_SERVICE_KEY = config('USERINATOR_SERVICE_KEY', default='dev-internal-service-key-change-in-production')
+
 # Django sites framework (required for allauth)
 SITE_ID = 1
 

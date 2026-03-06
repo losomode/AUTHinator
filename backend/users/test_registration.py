@@ -6,9 +6,9 @@ Target: ≥85% coverage
 
 Tests for:
 - POST /api/auth/register/ - User registration
-- GET /api/users/pending/ - List pending approvals (admin)
-- POST /api/users/{id}/approve/ - Approve user (admin)
-- POST /api/users/{id}/reject/ - Reject user (admin)
+- GET /api/auth/users/pending/ - List pending approvals (admin)
+- POST /api/auth/users/{id}/approve/ - Approve user (admin)
+- POST /api/auth/users/{id}/reject/ - Reject user (admin)
 """
 import pytest
 from django.test import Client
@@ -219,7 +219,7 @@ class TestPendingUsersEndpoint:
         
         client = Client()
         response = client.get(
-            '/api/users/pending/',
+            '/api/auth/users/pending/',
             HTTP_AUTHORIZATION=f'Bearer {admin_tokens["access"]}'
         )
         
@@ -231,7 +231,7 @@ class TestPendingUsersEndpoint:
     def test_get_pending_users_requires_auth(self):
         """Test pending users endpoint requires authentication."""
         client = Client()
-        response = client.get('/api/users/pending/')
+        response = client.get('/api/auth/users/pending/')
         
         assert response.status_code == 401
     
@@ -256,7 +256,7 @@ class TestPendingUsersEndpoint:
         
         # Try to access pending users
         response = client.get(
-            '/api/users/pending/',
+            '/api/auth/users/pending/',
             HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}'
         )
         
@@ -313,7 +313,7 @@ class TestApproveUserEndpoint:
         """Test admin can approve a pending user."""
         client = Client()
         response = client.post(
-            f'/api/users/{pending_user.id}/approve/',
+            f'/api/auth/users/{pending_user.id}/approve/',
             HTTP_AUTHORIZATION=f'Bearer {admin_tokens["access"]}'
         )
         
@@ -329,7 +329,7 @@ class TestApproveUserEndpoint:
         """Test approval sends email to user."""
         client = Client()
         client.post(
-            f'/api/users/{pending_user.id}/approve/',
+            f'/api/auth/users/{pending_user.id}/approve/',
             HTTP_AUTHORIZATION=f'Bearer {admin_tokens["access"]}'
         )
         
@@ -359,7 +359,7 @@ class TestApproveUserEndpoint:
         
         # Try to approve user
         response = client.post(
-            f'/api/users/{pending_user.id}/approve/',
+            f'/api/auth/users/{pending_user.id}/approve/',
             HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}'
         )
         
@@ -416,7 +416,7 @@ class TestRejectUserEndpoint:
         """Test admin can reject a pending user."""
         client = Client()
         response = client.post(
-            f'/api/users/{pending_user.id}/reject/',
+            f'/api/auth/users/{pending_user.id}/reject/',
             {'reason': 'Invalid documentation'},
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {admin_tokens["access"]}'
@@ -433,7 +433,7 @@ class TestRejectUserEndpoint:
         """Test rejection requires a reason."""
         client = Client()
         response = client.post(
-            f'/api/users/{pending_user.id}/reject/',
+            f'/api/auth/users/{pending_user.id}/reject/',
             {},
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {admin_tokens["access"]}'
@@ -445,7 +445,7 @@ class TestRejectUserEndpoint:
         """Test rejection sends email to user."""
         client = Client()
         client.post(
-            f'/api/users/{pending_user.id}/reject/',
+            f'/api/auth/users/{pending_user.id}/reject/',
             {'reason': 'Invalid documentation'},
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {admin_tokens["access"]}'

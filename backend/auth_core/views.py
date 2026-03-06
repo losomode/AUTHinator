@@ -17,6 +17,7 @@ from django.contrib.auth import authenticate
 from django.core.signing import TimestampSigner
 
 from .serializers import LoginSerializer, UserSerializer
+from .tokens import create_enriched_tokens
 
 # Signer for MFA tokens (step-up auth between password and MFA verification)
 mfa_signer = TimestampSigner(salt='mfa-login')
@@ -101,13 +102,9 @@ def login(request):
             'mfa_methods': mfa_methods,
         }, status=status.HTTP_200_OK)
     
-    # No MFA — issue JWT tokens directly
-    refresh = RefreshToken.for_user(user)
-    
-    return Response({
-        'access': str(refresh.access_token),
-        'refresh': str(refresh)
-    }, status=status.HTTP_200_OK)
+    # No MFA — issue JWT tokens enriched with USERinator role claims
+    tokens = create_enriched_tokens(user)
+    return Response(tokens, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

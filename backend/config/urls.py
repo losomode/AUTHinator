@@ -50,10 +50,10 @@ urlpatterns = [
     path('api/auth/mfa/totp-verify/', mfa_totp_verify, name='mfa-totp-verify'),
     path('api/auth/mfa/webauthn-begin/', mfa_webauthn_begin, name='mfa-webauthn-begin'),
     path('api/auth/mfa/webauthn-complete/', mfa_webauthn_complete, name='mfa-webauthn-complete'),
-    # User management endpoints
-    path('api/users/pending/', PendingUsersView.as_view(), name='pending-users'),
-    path('api/users/<int:pk>/approve/', approve_user, name='approve-user'),
-    path('api/users/<int:pk>/reject/', reject_user, name='reject-user'),
+    # User management endpoints (under /api/auth/users/ to avoid conflict with USERinator)
+    path('api/auth/users/pending/', PendingUsersView.as_view(), name='pending-users'),
+    path('api/auth/users/<int:pk>/approve/', approve_user, name='approve-user'),
+    path('api/auth/users/<int:pk>/reject/', reject_user, name='reject-user'),
     # Service registry
     path('api/', include(router.urls)),
     # SSO callback after successful login
