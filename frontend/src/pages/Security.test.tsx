@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import Profile from './Profile';
+import Security from './Security';
 
 // Mock the API client
 vi.mock('../api/client', () => ({
@@ -36,14 +36,14 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const renderProfile = () =>
+const renderSecurity = () =>
   render(
     <BrowserRouter>
-      <Profile />
+      <Security />
     </BrowserRouter>
   );
 
-describe('Profile', () => {
+describe('Security', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.setItem('auth_token', 'test-token');
@@ -51,7 +51,7 @@ describe('Profile', () => {
 
   it('should redirect to login if no token', () => {
     localStorage.removeItem('auth_token');
-    renderProfile();
+    renderSecurity();
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
@@ -63,7 +63,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
     // Spinner is a div with border-b-2 class — just check main content isn't rendered yet
     expect(screen.queryByText('Account Information')).not.toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText('testuser')).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -112,7 +112,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: true });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText('✓ Enabled')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('Profile', () => {
     });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('Profile', () => {
     (totpApi.confirm as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe('Profile', () => {
     (totpApi.disable as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Disable 2FA' })).toBeInTheDocument();
@@ -223,7 +223,7 @@ describe('Profile', () => {
       { id: 1, name: 'YubiKey', created_at: '2025-01-15T00:00:00Z' },
     ]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText(/YubiKey/)).toBeInTheDocument();
@@ -239,7 +239,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Add Security Key' })).toBeInTheDocument();
@@ -259,7 +259,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Add Security Key' })).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText('← Back')).toBeInTheDocument();
@@ -295,7 +295,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText('Network error')).toBeInTheDocument();
@@ -313,7 +313,7 @@ describe('Profile', () => {
     });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -336,7 +336,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: true });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Disable 2FA' })).toBeInTheDocument();
@@ -365,7 +365,7 @@ describe('Profile', () => {
     });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -388,7 +388,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: false });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Add Security Key' })).toBeInTheDocument();
@@ -408,7 +408,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockRejectedValue(err);
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockRejectedValue(err);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/login');
@@ -426,7 +426,7 @@ describe('Profile', () => {
     });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -452,7 +452,7 @@ describe('Profile', () => {
     });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enable 2FA' })).toBeInTheDocument();
@@ -483,7 +483,7 @@ describe('Profile', () => {
     });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Disable 2FA' })).toBeInTheDocument();
@@ -512,7 +512,7 @@ describe('Profile', () => {
     (totpApi.status as ReturnType<typeof vi.fn>).mockResolvedValue({ enabled: true });
     (webauthnApi.listCredentials as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Disable 2FA' })).toBeInTheDocument();
@@ -538,7 +538,7 @@ describe('Profile', () => {
     ]);
     (webauthnApi.deleteCredential as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText(/YubiKey/)).toBeInTheDocument();
@@ -565,7 +565,7 @@ describe('Profile', () => {
     ]);
     (webauthnApi.deleteCredential as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('fail'));
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByText(/YubiKey/)).toBeInTheDocument();
@@ -590,7 +590,7 @@ describe('Profile', () => {
       new Error('Registration failed')
     );
 
-    renderProfile();
+    renderSecurity();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Add Security Key' })).toBeInTheDocument();

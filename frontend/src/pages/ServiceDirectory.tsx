@@ -103,7 +103,7 @@ const ServiceDirectory: React.FC = () => {
                   <p className="text-xs text-gray-500">{user.customer?.name ?? user.role}</p>
                 </div>
                 <button
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/security')}
                   className="px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
                 >
                   🔒 Security
