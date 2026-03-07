@@ -102,9 +102,13 @@ def login(request):
             'mfa_methods': mfa_methods,
         }, status=status.HTTP_200_OK)
     
-    # No MFA — issue JWT tokens enriched with USERinator role claims
-    tokens = create_enriched_tokens(user)
-    return Response(tokens, status=status.HTTP_200_OK)
+    # No MFA — issue minimal JWT tokens (user_id, username, email only)
+    # Services will query USERinator for role/company context as needed
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -186,4 +190,9 @@ def me(request):
         401: Not authenticated
     """
     serializer = UserSerializer(request.user)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    response = Response(serializer.data, status=status.HTTP_200_OK)
+    # Prevent browser caching of user data to avoid stale data on user switch
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response

@@ -8,7 +8,6 @@ from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from allauth.socialaccount.models import SocialAccount
 from users.models import User, Customer
-from auth_core.tokens import create_enriched_tokens
 
 
 class SSOCallbackView(View):
@@ -26,25 +25,14 @@ class SSOCallbackView(View):
         
         user = request.user
         
-        # Ensure user has a customer - create one if needed
-        if not hasattr(user, 'customer') or user.customer is None:
-            # Get user's email domain for customer name
-            email_domain = user.email.split('@')[1] if user.email and '@' in user.email else 'Unknown'
-            customer_name = email_domain.split('.')[0].title() if '.' in email_domain else email_domain.title()
-            
-            # Create a customer for this user
-            customer = Customer.objects.create(name=f"{customer_name} Organization")
-            user.customer = customer
-            user.save()
-        
-        # Ensure user is verified and active
+        # Ensure user is verified and active (SSO users auto-verified)
         if not user.is_verified:
             user.is_verified = True
             user.save()
         
-        # Generate JWT tokens enriched with USERinator role claims
-        tokens = create_enriched_tokens(user)
-        access_token = tokens['access']
+        # Generate minimal JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
         
         # Get the 'next' parameter if it was passed through the login flow
         next_url = request.session.get('socialaccount_next_url', None)

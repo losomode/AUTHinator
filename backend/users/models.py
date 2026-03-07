@@ -58,14 +58,7 @@ class CustomUserManager(UserManager):
         extra_fields.setdefault('role', 'ADMIN')
         extra_fields.setdefault('is_verified', True)
         extra_fields.setdefault('verified_at', timezone.now())
-        # Ensure superuser has a customer (required by frontend)
-        if 'customer' not in extra_fields or extra_fields['customer'] is None:
-            from users.models import Customer
-            customer, _ = Customer.objects.get_or_create(
-                name='Platform Admin',
-                defaults={'contact_email': email or f'{username}@localhost'}
-            )
-            extra_fields['customer'] = customer
+        # No customer assignment - managed in USERinator
         return super().create_superuser(username, email, password, **extra_fields)
 
 

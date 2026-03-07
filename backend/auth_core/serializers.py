@@ -16,16 +16,15 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializer for User model.
-    Includes nested customer information.
+    Serializer for User model (minimal auth data only).
+    Services should query USERinator for company/role context.
     """
-    customer = CustomerSerializer(read_only=True)
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'customer', 'role', 'is_verified', 'is_active'
+            'role', 'is_verified', 'is_active'
         ]
         read_only_fields = ['id', 'is_verified']
 
@@ -37,16 +36,18 @@ class LoginSerializer(serializers.Serializer):
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for user registration."""
+    """Serializer for user registration (no customer required).
+    
+    User profiles and company assignments are managed in USERinator.
+    """
     password = serializers.CharField(write_only=True, required=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True, required=True)
-    customer_id = serializers.IntegerField(write_only=True, required=True)
     
     class Meta:
         model = User
         fields = [
             'username', 'email', 'password', 'password_confirm',
-            'first_name', 'last_name', 'customer_id', 'role'
+            'first_name', 'last_name', 'role'
         ]
         extra_kwargs = {
             'email': {'validators': []},  # Disable default validators, we'll add custom validation
@@ -65,19 +66,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return value
     
     def validate(self, attrs):
-        """Validate password match and customer existence."""
+        """Validate password match."""
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Passwords do not match."})
-        
-        # Validate customer exists
-        customer_id = attrs.get('customer_id')
-        try:
-            customer = Customer.objects.get(id=customer_id)
-            if not customer.is_active:
-                raise serializers.ValidationError({"customer_id": "Customer is not active."})
-            attrs['customer'] = customer
-        except Customer.DoesNotExist:
-            raise serializers.ValidationError({"customer_id": "Invalid customer ID."})
         
         # Prevent users from registering as admin
         role = attrs.get('role', User.USER)
@@ -87,13 +78,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        """Create new user with unverified status."""
+        """Create new user with unverified status (no customer assignment).
+        
+        Company assignment should be done in USERinator after admin approval.
+        """
         validated_data.pop('password_confirm')
-        customer = validated_data.pop('customer')
         password = validated_data.pop('password')
         
         user = User.objects.create_user(
-            customer=customer,
             password=password,
             is_verified=False,
             is_active=True,  # Active but not verified

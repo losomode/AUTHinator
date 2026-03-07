@@ -1,82 +1,69 @@
 """
-Management command to populate Authinator with demo data.
+Management command to populate Authinator with demo authentication data.
 
-Creates 3 customer companies and 5 demo users across them.
-All demo user passwords are 'demo123'.
+Creates demo user accounts with credentials only.
+Company assignments and roles are managed in USERinator.
+All demo user passwords are 'demo123', admin password is 'admin123'.
 Idempotent — safe to run multiple times.
 """
 from django.core.management.base import BaseCommand
-from django.utils import timezone
-from users.models import Customer, User
+from users.models import User
 
-
-CUSTOMERS = [
-    {
-        'name': 'Meridian Security Solutions',
-        'contact_email': 'info@meridian-sec.com',
-        'contact_phone': '555-0100',
-        'billing_address': '742 Surveillance Blvd, Austin, TX 78701',
-    },
-    {
-        'name': 'Apex Manufacturing',
-        'contact_email': 'orders@apexmfg.com',
-        'contact_phone': '555-0200',
-        'billing_address': '1200 Industrial Pkwy, Detroit, MI 48201',
-    },
-    {
-        'name': 'Coastal Networks',
-        'contact_email': 'support@coastalnet.com',
-        'contact_phone': '555-0300',
-        'billing_address': '88 Harbor Dr, San Diego, CA 92101',
-    },
-]
-
+# Demo users - credentials only, no company assignments
+# Company/role data is managed in USERinator
 USERS = [
-    # (username, email, role, customer_name)
-    ('sarah.chen', 'sarah@meridian-sec.com', 'ADMIN', 'Meridian Security Solutions'),
-    ('james.wilson', 'james@meridian-sec.com', 'USER', 'Meridian Security Solutions'),
-    ('lisa.patel', 'lisa@apexmfg.com', 'USER', 'Apex Manufacturing'),
-    ('mike.torres', 'mike@apexmfg.com', 'USER', 'Apex Manufacturing'),
-    ('emma.jackson', 'emma@coastalnet.com', 'USER', 'Coastal Networks'),
+    # (user_id, username, email, is_admin)
+    (1, 'admin', 'admin@example.com', True),
+    (101, 'bob.manager', 'bob@acme.example.com', False),
+    (102, 'carol', 'carol@acme.example.com', False),
+    (103, 'dave', 'dave@acme.example.com', False),
+    (104, 'globex.admin', 'admin@globex.example.com', True),
+    (105, 'frank', 'frank@globex.example.com', False),
+    (106, 'grace', 'grace@globex.example.com', False),
+    (107, 'initech.admin', 'admin@initech.example.com', True),
+    (108, 'iris', 'iris@initech.example.com', False),
+    (109, 'jack', 'jack@initech.example.com', False),
 ]
 
 DEMO_PASSWORD = 'demo123'
 
 
 class Command(BaseCommand):
-    help = 'Populate Authinator with demo customers and users'
+    help = 'Populate Authinator with demo user credentials'
 
     def handle(self, *args, **options):
-        self.stdout.write('Seeding Authinator demo data...')
+        self.stdout.write('Seeding Authinator demo users...')
 
-        # Create customers
-        customers = {}
-        for data in CUSTOMERS:
-            customer, created = Customer.objects.get_or_create(
-                name=data['name'],
-                defaults=data,
-            )
-            customers[customer.name] = customer
-            status = 'created' if created else 'exists'
-            self.stdout.write(f'  Customer: {customer.name} ({status})')
+        # Create demo users (credentials only, no company assignment)
+        for user_id, username, email, is_admin in USERS:
+            auth_role = 'ADMIN' if is_admin else 'USER'
+            
+            # Password: admin123 for admin, demo123 for others
+            password = 'admin123' if username == 'admin' else DEMO_PASSWORD
+            
+            # Check if user exists
+            try:
+                user = User.objects.get(username=username)
+                # Update existing user
+                user.email = email
+                user.role = auth_role
+                user.is_verified = True
+                user.is_staff = is_admin
+                user.save()
+                self.stdout.write(f'  User: {username} (updated)')
+            except User.DoesNotExist:
+                # Create new user
+                user = User(
+                    id=user_id,
+                    username=username,
+                    email=email,
+                    role=auth_role,
+                    is_verified=True,
+                    is_staff=is_admin,
+                )
+                user.set_password(password)
+                user.save()
+                self.stdout.write(f'  User: {user.username} (created)')
 
-        # Create demo users
-        for username, email, role, customer_name in USERS:
-            customer = customers[customer_name]
-            if User.objects.filter(username=username).exists():
-                self.stdout.write(f'  User: {username} (exists)')
-                continue
-
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=DEMO_PASSWORD,
-                role=role,
-                customer=customer,
-                is_verified=True,
-                verified_at=timezone.now(),
-                is_staff=(role == 'ADMIN'),
-            )
-            self.stdout.write(f'  User: {user.username} ({role}, {customer_name})')
-
-        self.stdout.write(self.style.SUCCESS('✓ Authinator demo data seeded'))
+        self.stdout.write(self.style.SUCCESS('✓ Authinator demo users seeded'))
+        self.stdout.write('  Note: Company assignments managed in USERinator')
