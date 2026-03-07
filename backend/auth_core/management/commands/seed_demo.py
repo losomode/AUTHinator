@@ -1,10 +1,10 @@
 """
-"""Management command to populate Authinator with demo authentication data.
+Management command to populate Authinator with demo authentication data.
 
 Creates demo user accounts with credentials only.
 Company assignments and roles are managed in USERinator.
 Passwords: 'admin' for admins, 'manager' for managers, 'member' for members.
-Idempotent — safe to run multiple times.
+Idempotent - safe to run multiple times.
 """
 from django.core.management.base import BaseCommand
 from users.models import User
