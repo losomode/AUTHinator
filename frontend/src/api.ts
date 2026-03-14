@@ -1,43 +1,29 @@
-import axios from 'axios';
-import { LoginResult, LoginResponse, User, Service, TotpStatusResponse, TotpSetupResponse, WebAuthnCredential } from './types';
+import apiClient from '@inator/shared/api/client';
+import type { LoginResult, LoginResponse } from '@inator/shared/types';
+import type {
+  Service,
+  TotpStatusResponse,
+  TotpSetupResponse,
+  WebAuthnCredential,
+  SSOProvider,
+} from './types';
 
-const API_BASE = 'http://localhost:8001/api';
-
-const apiClient = axios.create({
-  baseURL: API_BASE,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests if available
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
+/** Core authentication endpoints. */
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResult> => {
-    const response = await apiClient.post<LoginResult>('/auth/login/', {
-      username,
-      password,
-    });
+    const response = await apiClient.post<LoginResult>('/auth/login/', { username, password });
     return response.data;
   },
 
-  me: async (): Promise<User> => {
-    const response = await apiClient.get<User>('/auth/me/');
-    return response.data;
-  },
-
-  logout: async (refreshToken: string): Promise<void> => {
-    await apiClient.post('/auth/logout/', { refresh: refreshToken });
+  /** Fetch SSO providers. Uses fetch() to avoid interceptor side-effects on public endpoint. */
+  ssoProviders: async (): Promise<SSOProvider[]> => {
+    const response = await fetch('/api/auth/sso-providers/');
+    const data = (await response.json()) as { providers?: SSOProvider[] };
+    return data.providers ?? [];
   },
 };
 
+/** Service registry. */
 export const servicesApi = {
   list: async (): Promise<Service[]> => {
     const response = await apiClient.get<Service[]>('/services/');
@@ -45,6 +31,7 @@ export const servicesApi = {
   },
 };
 
+/** TOTP two-factor authentication management. */
 export const totpApi = {
   status: async (): Promise<TotpStatusResponse> => {
     const response = await apiClient.get<TotpStatusResponse>('/auth/totp/status/');
@@ -62,6 +49,7 @@ export const totpApi = {
   },
 };
 
+/** MFA verification during login. */
 export const mfaApi = {
   totpVerify: async (mfaToken: string, code: string): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/mfa/totp-verify/', {
@@ -70,8 +58,8 @@ export const mfaApi = {
     });
     return response.data;
   },
-  webauthnBegin: async (mfaToken: string) => {
-    const response = await apiClient.post('/auth/mfa/webauthn-begin/', {
+  webauthnBegin: async (mfaToken: string): Promise<{ options: unknown }> => {
+    const response = await apiClient.post<{ options: unknown }>('/auth/mfa/webauthn-begin/', {
       mfa_token: mfaToken,
     });
     return response.data;
@@ -79,28 +67,28 @@ export const mfaApi = {
   webauthnComplete: async (mfaToken: string, assertion: unknown): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/mfa/webauthn-complete/', {
       mfa_token: mfaToken,
-      ...assertion as Record<string, unknown>,
+      ...(assertion as Record<string, unknown>),
     });
     return response.data;
   },
 };
 
+/** WebAuthn credential management (profile page). */
 export const webauthnApi = {
   listCredentials: async (): Promise<WebAuthnCredential[]> => {
     const response = await apiClient.get<WebAuthnCredential[]>('/auth/webauthn/credentials/');
     return response.data;
   },
-  registerBegin: async (name: string) => {
-    const response = await apiClient.post('/auth/webauthn/register/begin/', { name });
+  registerBegin: async (name: string): Promise<{ options: unknown }> => {
+    const response = await apiClient.post<{ options: unknown }>('/auth/webauthn/register/begin/', {
+      name,
+    });
     return response.data;
   },
-  registerComplete: async (credential: unknown) => {
-    const response = await apiClient.post('/auth/webauthn/register/complete/', credential);
-    return response.data;
+  registerComplete: async (credential: unknown): Promise<void> => {
+    await apiClient.post('/auth/webauthn/register/complete/', credential);
   },
   deleteCredential: async (id: number): Promise<void> => {
     await apiClient.delete(`/auth/webauthn/credentials/${id}/`);
   },
 };
-
-export default apiClient;

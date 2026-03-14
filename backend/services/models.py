@@ -12,9 +12,19 @@ class Service(models.Model):
     base_url = models.URLField(help_text="Base URL for API calls")
     api_prefix = models.CharField(max_length=50, help_text="API prefix (e.g., /api/fulfil)")
     ui_url = models.URLField(help_text="Frontend URL for user access")
+    ui_path = models.CharField(
+        max_length=100,
+        default="",
+        blank=True,
+        help_text="Gateway-relative frontend path (e.g., /users, /rma, /fulfil)",
+    )
     icon = models.CharField(max_length=10, default="🔷", help_text="Emoji icon for display")
     service_key = models.CharField(max_length=255, help_text="Secret key for service registration")
     is_active = models.BooleanField(default=True, help_text="Whether service is active and visible")
+    is_core = models.BooleanField(
+        default=False,
+        help_text="Whether this service is required platform infrastructure",
+    )
     
     # Metadata
     created_at = models.DateTimeField(default=timezone.now)

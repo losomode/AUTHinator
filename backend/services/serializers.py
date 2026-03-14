@@ -7,7 +7,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'ui_url', 'icon', 'is_active', 'last_registered_at']
+        fields = ['id', 'name', 'description', 'ui_url', 'ui_path', 'icon', 'is_active', 'is_core', 'last_registered_at']
         read_only_fields = ['id', 'last_registered_at']
 
 
@@ -16,7 +16,7 @@ class ServiceRegistrationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Service
-        fields = ['name', 'description', 'base_url', 'api_prefix', 'ui_url', 'icon', 'service_key']
+        fields = ['name', 'description', 'base_url', 'api_prefix', 'ui_url', 'ui_path', 'icon', 'is_core', 'service_key']
         extra_kwargs = {
             'service_key': {'write_only': True}
         }
