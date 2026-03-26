@@ -232,9 +232,13 @@ def deactivate_user(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated, IsAdmin])
+@permission_classes([AllowAny])  # Auth checked manually (JWT admin OR X-Service-Key)
 def set_user_password(request):
-    """Admin: force-set any user's password (no current password required)."""
+    """Force-set any user's password. Accessible to admin JWT or service key."""
+    is_admin = request.user and request.user.is_authenticated and request.user.is_admin()
+    if not is_admin and not _is_service_key_valid(request):
+        return Response({"detail": "Authentication required."}, status=status.HTTP_403_FORBIDDEN)
+
     serializer = SetUserPasswordSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -246,7 +250,39 @@ def set_user_password(request):
 
     user.set_password(serializer.validated_data["new_password"])
     user.save()
-    logger.info(
-        "Admin %s reset password for user %s.", request.user.username, user.username
-    )
+    logger.info("Password reset for user %s (id=%s).", user.username, user.id)
     return Response({"detail": f"Password for {user.username} updated successfully."})
+
+
+class SetUsernameSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(required=True)
+    new_username = serializers.CharField(required=True, min_length=3, max_length=150)
+
+    def validate_new_username(self, value):
+        if User.objects.filter(username=value, is_active=True).exists():
+            raise serializers.ValidationError("An active user with this username already exists.")
+        return value
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])  # Auth checked manually (JWT admin OR X-Service-Key)
+def set_user_username(request):
+    """Force-set any user's username. Accessible to admin JWT or service key."""
+    is_admin = request.user and request.user.is_authenticated and request.user.is_admin()
+    if not is_admin and not _is_service_key_valid(request):
+        return Response({"detail": "Authentication required."}, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = SetUsernameSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(pk=serializer.validated_data["user_id"])
+    except User.DoesNotExist:
+        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    old_username = user.username
+    user.username = serializer.validated_data["new_username"]
+    user.save()
+    logger.info("Username changed %s -> %s (id=%s).", old_username, user.username, user.id)
+    return Response({"username": user.username, "detail": f"Username updated to {user.username}."})
