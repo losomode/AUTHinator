@@ -11,6 +11,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from auth_core.views import health_check, login, refresh_token, logout, me
+from auth_core.admin_views import change_password, change_username, create_user, set_user_password, deactivate_user
 from auth_core.sso_views import sso_providers
 from auth_core.sso_callback import SSOCallbackView
 from users.views import RegisterView, PendingUsersView, approve_user, reject_user
@@ -35,6 +36,11 @@ urlpatterns = [
     path('api/auth/logout/', logout, name='logout'),
     path('api/auth/me/', me, name='me'),
     path('api/auth/register/', RegisterView.as_view(), name='register'),
+    path('api/auth/change-password/', change_password, name='change-password'),
+    path('api/auth/change-username/', change_username, name='change-username'),
+    path('api/auth/create-user/', create_user, name='create-user'),
+    path('api/auth/admin/set-password/', set_user_password, name='set-user-password'),
+    path('api/auth/admin/deactivate-user/', deactivate_user, name='deactivate-user'),
     path('api/auth/sso-providers/', sso_providers, name='sso-providers'),
     # TOTP (2FA) endpoints
     path('api/auth/totp/status/', totp_status, name='totp-status'),
