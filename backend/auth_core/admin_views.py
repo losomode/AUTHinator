@@ -142,16 +142,21 @@ def change_username(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])  # Auth is checked manually below (JWT admin OR X-Service-Key)
+@permission_classes([AllowAny])  # Auth checked manually: valid JWT OR X-Service-Key
 def create_user(request):
     """Create a verified user account.
 
     Accessible to:
-    - Admin users (role == ADMIN via JWT)
+    - Any JWT-authenticated user (fine-grained role check is USERinator's responsibility)
     - Internal services using X-Service-Key header (e.g. USERinator invitation approval)
+
+    Note: We accept any authenticated user here because AUTHinator’s coarse ADMIN/USER role
+    doesn’t reflect platform roles (level 100 = PLATFORM_ADMIN in USERinator). The frontend
+    already restricts the Create User page to level-100 users; USERinator’s serializer
+    enforces the role hierarchy on profile creation.
     """
-    is_admin = request.user and request.user.is_authenticated and request.user.is_admin()
-    if not is_admin and not _is_service_key_valid(request):
+    is_authenticated = bool(request.user and request.user.is_authenticated)
+    if not is_authenticated and not _is_service_key_valid(request):
         return Response(
             {"detail": "Authentication required."},
             status=status.HTTP_403_FORBIDDEN,
